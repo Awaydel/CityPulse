@@ -1,12 +1,10 @@
-apache-airflow>=2.0
+п»їapache-airflow>=2.0
 requests
 pandas
-psycopg2-binary # Для PostgreSQL
-great_expectations # Для DQ-тестирования
-requests 
-pandas 
-numpy 
-scikit-learn 
-psycopg2-binary 
-fastapi 
-uvicorn 
+numpy
+scikit-learn
+psycopg2-binary
+fastapi
+uvicorn
+great_expectations
+pytest

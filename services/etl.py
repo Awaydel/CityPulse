@@ -1,4 +1,5 @@
 import requests
+import os
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -72,7 +73,23 @@ def transform_data(w_data, aq_data):
         df = pd.merge(df_w, df_aq, on='time', how='inner')
         df['timestamp'] = pd.to_datetime(df['time'])
         
-        # DQ: Удаляем аномалии
+        # DQ: Check for violations before cleaning
+        violations = df[(df['pm10'] < 0) | (df['pm25'] < 0)]
+        
+        if not violations.empty:
+            violation_count = len(violations)
+            total_count = len(df)
+            violation_rate = violation_count / total_count * 100
+            
+            # Log violations to file for audit
+            violations.to_csv('dq_violations.csv', mode='a', header=not os.path.exists('dq_violations.csv'), index=False)
+            logger.warning(f"DQ Violation: Found {violation_count} rows with negative PM values.")
+            
+            # Red Flag Rule
+            if violation_rate > 0.5:
+                logger.error(f"CRITICAL QUALITY ALERT: Violation rate {violation_rate:.2f}% exceeds threshold 0.5%!")
+        
+        # Clean data
         df.loc[df['pm10'] < 0, 'pm10'] = None
         df.loc[df['pm25'] < 0, 'pm25'] = None
         

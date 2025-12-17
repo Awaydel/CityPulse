@@ -33,4 +33,8 @@ jobs:
       env:
         PYTHONPATH: .
       run: |
-        python -m pytest
+        # Run tests with coverage report
+        # --cov=. : Measure coverage for current directory
+        # --cov-report=term-missing : Show missing lines in terminal
+        # --cov-fail-under=70 : Fail if coverage is less than 70%
+        python -m pytest --cov=. --cov-report=term-missing --cov-fail-under=70

@@ -11,7 +11,7 @@ app = FastAPI(title="EcoSense API", description="API для мониторинг
 # --- PYDANTIC MODELS (Validation & Documentation) ---
 class City(BaseModel):
     city_id: int
-    name: string
+    name: str
     country_code: str
     latitude: float
     longitude: float

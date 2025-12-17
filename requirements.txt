@@ -8,3 +8,5 @@ fastapi
 uvicorn
 great_expectations
 pytest
+httpx
+pytest-cov

@@ -10,6 +10,34 @@ TEST_COUNTRY_CODE = "IT"
 TEST_LAT = 10.0
 TEST_LNG = 20.0
 
+# Check if DB is available
+def is_db_available():
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        conn.close()
+        return True
+    except:
+        return False
+
+pytestmark = pytest.mark.skipif(
+    not is_db_available(),
+    reason="PostgreSQL not available (expected in CI without DB setup)"
+)
+
+# Check if DB is available
+def is_db_available():
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        conn.close()
+        return True
+    except:
+        return False
+
+pytestmark = pytest.mark.skipif(
+    not is_db_available(),
+    reason="PostgreSQL not available (expected in CI without DB setup)"
+)
+
 @pytest.fixture(scope="module")
 def db_connection():
     """Создает подключение к реальной БД и удаляет тестовые данные после завершения"""

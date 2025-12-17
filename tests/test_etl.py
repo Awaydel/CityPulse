@@ -149,3 +149,84 @@ def test_train_and_predict_ml_not_enough_data():
     # Проверки
     assert 'predicted_pm25' in df_result.columns
     assert df_result['predicted_pm25'].isna().all() # Все значения должны быть None/NaN
+
+# --- Тесты для DB и Main (Mocked) ---
+
+from services.etl import get_db_connection, load_to_db, main
+
+@patch('services.etl.psycopg2.connect')
+def test_get_db_connection_success(mock_connect):
+    """Тест успешного подключения к БД"""
+    mock_connect.return_value = 'connection_obj'
+    conn = get_db_connection()
+    assert conn == 'connection_obj'
+
+@patch('services.etl.psycopg2.connect')
+def test_get_db_connection_fail(mock_connect):
+    """Тест неуспешного подключения"""
+    mock_connect.side_effect = Exception("Connection error")
+    conn = get_db_connection()
+    assert conn is None
+
+@patch('services.etl.execute_values')
+def test_load_to_db(mock_execute_values):
+    """Тест функции загрузки в БД (mocking SQL execution)"""
+    mock_conn = MagicMock()
+    mock_cursor = MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    
+    # Mocking fetchone logic for city_id
+    # First call: insert city -> returns city_id
+    mock_cursor.fetchone.return_value = [1] 
+    
+    # Data for test
+    df_data = {
+        'timestamp': [pd.Timestamp('2023-01-01')],
+        'temperature': [20.0],
+        'humidity': [50.0],
+        'wind_speed': [5.0],
+        'pm10': [10.0],
+        'pm25': [5.0],
+        'predicted_pm25': [5.5]
+    }
+    df = pd.DataFrame(df_data)
+    
+    load_to_db(mock_conn, df, "TestCity", 55.0, 37.0, "RU")
+    
+    # Verify calls
+    assert mock_cursor.execute.call_count >= 1 # At least inserts city
+    
+    # Verify execute_values was called twice (weather and aq)
+    assert mock_execute_values.call_count == 2
+    
+    mock_conn.commit.assert_called_once()
+    mock_cursor.close.assert_called_once()
+
+@patch('services.etl.get_db_connection')
+@patch('services.etl.fetch_open_meteo_data')
+@patch('services.etl.transform_data')
+@patch('services.etl.train_and_predict_ml')
+@patch('services.etl.load_to_db')
+def test_main_success(mock_load, mock_train, mock_transform, mock_fetch, mock_get_db):
+    """Тест основной функции main (full happy path)"""
+    mock_get_db.return_value = MagicMock()
+    
+    # Setup mock returns
+    mock_fetch.return_value = ({}, {})
+    mock_transform.return_value = pd.DataFrame()
+    mock_train.return_value = pd.DataFrame()
+    
+    main()
+    
+    assert mock_fetch.call_count == 4 # 4 cities in config
+    assert mock_load.call_count == 4
+    mock_get_db.return_value.close.assert_called_once()
+
+@patch('services.etl.get_db_connection')
+def test_main_no_db(mock_get_db):
+    """Тест main если нет подключения к БД"""
+    mock_get_db.return_value = None
+    main()
+    # Should just return
+    mock_get_db.assert_called_once()
+

@@ -1,0 +1,3 @@
+check,severity,column,expected_range,violation_count,violation_rate,message
+range,ERROR,temperature,"[-50, 60]",1,33.33%,"Колонка temperature: 1 значений вне диапазона [-50, 60]"
+range,ERROR,humidity,"[0, 100]",1,33.33%,"Колонка humidity: 1 значений вне диапазона [0, 100]"

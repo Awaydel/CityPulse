@@ -1,10 +1,10 @@
-# 🔄 EcoSense Analytics: ETL Pipeline Architecture
+# EcoSense Analytics: Архитектура ETL Pipeline
 
 **Полное описание: как устроено и как работает система мониторинга качества воздуха**
 
 ---
 
-## 📑 Содержание
+## Содержание
 
 1. [Общая архитектура](#общая-архитектура)
 2. [Данные: Источники](#данные-источники)
@@ -15,12 +15,12 @@
 7. [Storage: Витрина данных](#storage-витрина-данных)
 8. [API: REST endpoints](#api-rest-endpoints)
 9. [UI: Фронтенд](#ui-фронтенд)
-10. [Scheduling & Monitoring](#scheduling--monitoring)
-11. [Error Handling & Retry Logic](#error-handling--retry-logic)
+10. [Расписание и мониторинг](#расписание-и-мониторинг)
+11. [Обработка ошибок и повторы](#обработка-ошибок-и-повторы)
 
 ---
 
-## 🏗️ Общая архитектура
+## Общая архитектура
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -151,27 +151,27 @@
 
 ---
 
-## 📊 Данные: Источники
+## Данные: Источники
 
 ### **1. Open-Meteo Weather API**
 - **Endpoint**: `https://api.open-meteo.com/v1/forecast`
-- **Parameters**:
+- **Параметры**:
   - `latitude`, `longitude`: Coordinates of city
   - `past_days=7`: Fetch 7 days of historical data
   - `forecast_days=1`: Fetch 1 day of forecast
   - `hourly=temperature_2m,relative_humidity_2m,wind_speed_10m`: Metrics
-- **Response**: JSON with `hourly` array containing timestamps and measurements
+- **Ответ**: JSON with `hourly` array with `hourly` array containing timestamps and measurements
 - **Granularity**: Hourly
 - **Cost**: Free, no authentication
 
 ### **2. Open-Meteo Air Quality API**
 - **Endpoint**: `https://air-quality-api.open-meteo.com/v1/air-quality`
-- **Parameters**:
+- **Параметры**:
   - `latitude`, `longitude`: Coordinates of city
   - `past_days=7`: Fetch 7 days historical
   - `forecast_days=1`: Fetch 1 day forecast
   - `hourly=pm10,pm2_5`: Air quality metrics
-- **Response**: JSON with `hourly` array
+- **Ответ**: JSON with `hourly` array with `hourly` array
 - **Granularity**: Hourly
 - **Cost**: Free, no authentication
 
@@ -195,9 +195,9 @@
 
 ---
 
-## 🔍 Extract: Сбор данных
+## Extract: Сбор данных
 
-### **Function**: `fetch_open_meteo_data(lat, lng)`
+### **Функция**: `fetch_open_meteo_data(lat, lng)`
 
 Located in: `services/etl.py` (lines 47-59)
 
@@ -241,14 +241,14 @@ def fetch_open_meteo_data(lat, lng):
 
 ---
 
-## 🔄 Transform: Преобразование
+## Transform: Преобразование
 
-### **Functions Chain**:
+### **Цепочка функций**:
 
 #### **1. `transform_data(w_data, aq_data)`**
 Located: `services/etl.py` (lines 62-88)
 
-**Steps**:
+**Шаги**:
 1. Create weather DataFrame from `w_data['hourly']`
    - Columns: `time`, `temperature`, `humidity`, `wind_speed`
 2. Create air quality DataFrame from `aq_data['hourly']`
@@ -261,7 +261,7 @@ Located: `services/etl.py` (lines 62-88)
    - Replace negative PM2.5 values with NULL
    - Rationale: API sometimes returns negative values for missing data
 
-**Output**:
+**Результат**:
 ```python
 DataFrame {
   time: str (ISO)
@@ -380,7 +380,7 @@ const daysExceedingWHO = Array.from(dailyMax.values())
 
 ## 📥 Load: Загрузка в БД
 
-### **Function**: `load_to_db(conn, df, city_name, lat, lng, country)`
+### **Функция**: `load_to_db(conn, df, city_name, lat, lng, country)`
 Located: `services/etl.py` (lines 125-180)
 
 ### **Step 1: Upsert City Dimension**
@@ -484,7 +484,7 @@ CREATE INDEX idx_aq_time ON fact_air_quality(timestamp);
 
 ### **SQL VIEW**: `dm_dashboard_analytics`
 
-**Purpose**: Provide single query entry point for frontend
+**Назначение**: Provide single query entry point for frontend
 
 **Definition** (from `ecosense.sql`):
 
@@ -545,9 +545,9 @@ ORDER BY w.timestamp DESC;
 
 #### **1. GET /api/cities**
 
-**Purpose**: Fetch list of monitored cities
+**Назначение**: Fetch list of monitored cities
 
-**Response**:
+**Ответ**:
 ```json
 {
   "cities": [
@@ -578,13 +578,13 @@ SELECT * FROM dim_city ORDER BY name
 
 #### **2. GET /api/measurements**
 
-**Purpose**: Fetch dashboard data for a specific city
+**Назначение**: Fetch dashboard data for a specific city
 
-**Query Parameters**:
+**Параметры запроса**:
 - `city_name` (required): City name (string)
   - Example: `?city_name=Москва`
 
-**Response**:
+**Ответ**:
 ```json
 {
   "data": [
@@ -623,9 +623,9 @@ LIMIT 168
 
 #### **3. GET /**
 
-**Purpose**: Health check
+**Назначение**: Health check
 
-**Response**:
+**Ответ**:
 ```json
 {
   "status": "EcoSense API is running"
@@ -685,9 +685,9 @@ Close cursor + connection
 
 ---
 
-## 🖥️ UI: Фронтенд
+## UI: Фронтенд
 
-### **Framework**: React 19 + TypeScript + Vite
+### **Фреймворк**: React 19 + TypeScript + Vite
 
 **Entry Point**: `index.html` → `index.tsx` → `App.tsx`
 
@@ -782,7 +782,7 @@ const stats = useMemo(() => {
 
 #### **2. QA Report** 📋
 
-**Purpose**: Data quality assessment
+**Назначение**: Data quality assessment
 
 **Displays**:
 - Total rows
@@ -798,9 +798,9 @@ const stats = useMemo(() => {
 - Yellow: 80-95%
 - Red: < 80%
 
-#### **3. Data Registry** 📊
+#### **3. Реестр данных**
 
-**Purpose**: Browse raw measurements
+**Назначение**: Browse raw measurements
 
 **Columns**:
 - Timestamp
@@ -816,7 +816,7 @@ const stats = useMemo(() => {
 
 #### **4. Logs** 📝
 
-**Purpose**: System operation history
+**Назначение**: System operation history
 
 **Log Types**:
 - `info`: General messages
@@ -833,9 +833,9 @@ const stats = useMemo(() => {
 - City selection
 - QA validation results
 
-#### **5. Glossary** ℹ️
+#### **5. Словарь**
 
-**Purpose**: Help documentation
+**Назначение**: Help documentation
 
 **Contents**:
 - Metric definitions (PM2.5, PM10, WHO standards)
@@ -885,9 +885,9 @@ export const fetchDashboardData = async (cityName: string): Promise<UnifiedDataP
 
 ---
 
-## ⏰ Scheduling & Monitoring
+## Расписание и мониторинг
 
-### **Current State**: Manual execution
+### **Текущее состояние**: Ручной запуск
 
 ```bash
 python services/etl.py
@@ -998,7 +998,7 @@ logger.info(f"ETL completed in {elapsed_time}s")
 
 ---
 
-## ⚠️ Error Handling & Retry Logic
+## Обработка ошибок и повторы
 
 ### **Current Implementation**: Minimal
 

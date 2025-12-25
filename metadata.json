@@ -1,0 +1,5 @@
+{
+  "name": "EcoSense Аналитика",
+  "description": "ETL-пайплайн и дашборд визуализации, объединяющий данные OpenAQ и Open-Meteo для анализа влияния погоды на качество воздуха.",
+  "requestFramePermissions": []
+}
